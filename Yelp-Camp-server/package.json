@@ -1,0 +1,14 @@
+{
+  "name": "yelp-camp-server",
+  "version": "1.0.0",
+  "description": "This is the backend API for Yelp camp.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kartikeya Arun",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
