@@ -1,5 +1,1 @@
-# Yelp-camp-react-redux
-# Yelp-camp-react-redux
-# Yelp-camp-react-redux
-# Yelp-camp-react-redux
-# Yelp-camp-react-redux
+# Yelp-camp React-redux version
