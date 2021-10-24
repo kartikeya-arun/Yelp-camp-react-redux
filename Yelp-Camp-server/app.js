@@ -1,9 +1,15 @@
 const express=require('express')
 const app=express()
-const campground=require('./models/campgrounds')
 const mongoose=require('mongoose')
-const {Schema}=mongoose
 const bodyParser=require('body-parser')
+const errorHandler=require('./utils/error')
+const session=require('express-session')
+const passport=require('passport')
+const localStrategy=require('passport-local')
+const helmet=require('helmet')
+const MongoDBStore=require('connect-mongo')
+const campgroundRoutes=require('./routes/campgrounds')
+
 
 const dbUrl='mongodb://localhost:27017/yelp-camp'
 
@@ -15,71 +21,53 @@ mongoose.connect(dbUrl,{
 const db=mongoose.connection
 db.on("error",console.error.bind(console,"connection error:"))
 db.once("open",()=>{
-    console.log("Database connected")
+    console.log("Database connected🔗")
 })
 
+const store=new MongoDBStore({
+    mongoUrl:dbUrl,
+    touchAfter:24*60*60,
+    crypto:{
+        secret:'thisshouldbeanevenbettersecret!'
+    }
+})
+
+store.on('error',function(e){
+    console.log('STORE ERROR😱',e)
+})
+
+const sessionConfig={
+    store,
+    name:'session',
+    secret:'thisshouldbeanevenbettersecret!',
+    resave:false,
+    saveUninitialized:true,
+    cookie:{
+        httpOnly:true,
+        secure:true,
+        expires:Date.now()+1000*60*60*24*7,
+        maxAge:1000*60*60*24*7
+    }
+}
+
+app.use(session(sessionConfig))
+app.use(helmet())
 app.use(bodyParser.json())
+app.use(express.urlencoded({extended:true}))
 
 app.get('/',(req,res)=>{
     res.send("HomePage")
 })
+app.use('/campgrounds',campgroundRoutes)
 
-app.get('/campgrounds',async (req,res)=>{
-    const campgrounds=await campground.find({})
-    return res.json(campgrounds)
+app.use(function (req,res,next){
+    let err = new Error('Not Found');
+    err.status=404;
+    next(err);
 })
 
-app.post('/campgrounds',async (req,res)=>{
-    // const geoData=await geocoder.forwardGeocode({
-    //     query:req.body.campground.location,
-    //     limit:1
-    // }).send()
-    const newCampground = new campground(req.body)
-    // newCampground.geometry=geoData.body.features[0].geometry
-    // newCampground.images=req.files.map(f=>({url:f.path,filename:f.filename}))
-    // newCampground.author=req.user._id
-    await newCampground.save()
-    res.json(newCampground)
-})
-
-app.get('/campgrounds/:id', async (req,res)=>{
-    const Campground=await campground.findById(req.params.id)
-    // .populate({
-    //     path:'reviews',
-    //     populate:{
-    //         path:'author'
-    //     }
-    // }).populate('author')
-    if(!Campground){
-        res.json('Cannot find that campground!!')
-        return res.redirect('/campgrounds')
-    }
-    return res.json(Campground)
-})
-
-app.post('/campgrounds/:id',async(req,res)=>{
-    const {id}=req.params
-    // const camp=await campground.findByIdAndUpdate(id,{...req.body.campground})
-    const camp=await campground.findByIdAndUpdate(id,{...req.body})
-    // const imgs=req.files.map(f=>({url:f.path,filename:f.filename}))
-    // camp.images.push(...imgs)
-    await camp.save()
-    // if(req.body.deleteImages){
-    //     for(let filename of req.body.deleteImages){
-    //         await cloudinary.uploader.destroy(filename)
-    //     }
-    //     await camp.updateOne({$pull: {images:{filename:{$in:req.body.deleteImages}}}})
-    // }
-    // req.flash('success','Successfully updated campground!')
-    res.json(camp)
-})
-
-app.delete('/campgrounds/:id', async(req,res)=>{
-    const {id}=req.params
-    await campground.findByIdAndDelete(id)
-    res.json('Deleted successfully')
-})
+app.use(errorHandler)
 
 app.listen(process.env.PORT||8080,()=>{
-    console.log('Yelp camp is listening on 8080')
+    console.log('Yelp camp is listening on 8080 🚀')
 })
