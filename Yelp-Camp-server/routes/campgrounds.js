@@ -3,6 +3,29 @@ const router=express.Router()
 const mongoose=require('mongoose')
 const campground=require('../models/campgrounds')
 
+const isLoggedIn=(req,res,next)=>{
+    if(!req.isAuthenticated()){
+        req.session.returnTo=req.originalUrl
+        // req.flash('error','You must be signed in first!')
+        console.log(`🙍🏼‍♂️:${req.user}`)
+        return res.json('You need to be logged in.🔐')
+        // return res.redirect('/login')
+    }
+    next()
+}
+
+const isAuthor=async(req,res,next)=>{
+    const {id}=req.params
+    const updateCampground=await campground.findById(id)
+    if(!updateCampground.author.equals(req.user._id)){
+        // req.flash('error','You do not have permission to do that!')
+        console.log(`🙍🏼‍♂️:${req.user}`)
+        return res.json('You are not authorized to make this change.❌')
+        // return res.redirect(`/campgrounds/${id}`)
+    }
+    next()
+}
+
 router.route('/')
     .get(async (req,res,next)=>{
             try {
@@ -12,7 +35,7 @@ router.route('/')
                 next(error)
             }
     })
-    .post(async (req,res)=>{
+    .post(isLoggedIn,async (req,res)=>{
         try {
             // const geoData=await geocoder.forwardGeocode({
             //     query:req.body.campground.location,
@@ -48,7 +71,7 @@ router.route('/')
                 return next(error)
             }
         })
-        .put(async(req,res)=>{
+        .put(isLoggedIn,isAuthor,async(req,res)=>{
             try {
                 const {id}=req.params
                 // const camp=await campground.findByIdAndUpdate(id,{...req.body.campground})
@@ -68,7 +91,7 @@ router.route('/')
                 return next(error)
             }
         })
-        .delete(async(req,res)=>{
+        .delete(isLoggedIn,isAuthor,async(req,res)=>{
             try {
                 const {id}=req.params
                 await campground.findByIdAndDelete(id)

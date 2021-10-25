@@ -9,7 +9,8 @@ const localStrategy=require('passport-local')
 const helmet=require('helmet')
 const MongoDBStore=require('connect-mongo')
 const campgroundRoutes=require('./routes/campgrounds')
-
+const userRoutes=require('./routes/users')
+const User=require('./models/user')
 
 const dbUrl='mongodb://localhost:27017/yelp-camp'
 
@@ -55,9 +56,21 @@ app.use(helmet())
 app.use(bodyParser.json())
 app.use(express.urlencoded({extended:true}))
 
+app.use(passport.initialize())
+app.use(passport.session())
+passport.use(new localStrategy(User.authenticate()))
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
+
+app.use((req,res,next)=>{
+    res.locals.currentUser=req.user
+    next()
+})
+
 app.get('/',(req,res)=>{
     res.send("HomePage")
 })
+app.use('/',userRoutes)
 app.use('/campgrounds',campgroundRoutes)
 
 app.use(function (req,res,next){
