@@ -33,7 +33,7 @@ router.route('/register')
         // req.flash('success','welcome back!')
         const redirectUrl=req.session.returnTo || '/campgrounds'
         delete req.session.returnTo
-        console.log(`🙍🏼‍♂️:${req.user}`)
+        console.log(`🙍🏼‍♂️:${req.user} isAuthenticated👉🏼${req.isAuthenticated()}`)
         return res.redirect(redirectUrl)
     })
 

@@ -7,7 +7,7 @@ const isLoggedIn=(req,res,next)=>{
     if(!req.isAuthenticated()){
         req.session.returnTo=req.originalUrl
         // req.flash('error','You must be signed in first!')
-        console.log(`🙍🏼‍♂️:${req.user}`)
+        console.log(`🙍🏼‍♂️:${req.user} isAuthenticated👉🏼${req.isAuthenticated()}`)
         return res.json('You need to be logged in.🔐')
         // return res.redirect('/login')
     }
