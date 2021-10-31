@@ -14,6 +14,16 @@ const isLoggedIn=(req,res,next)=>{
     next()
 }
 
+const validateCampground=(req,res,next)=>{
+    const {error}=campgroundSchema.validate(req.body)
+    if(error){
+        const msg=error.details.map(el=>el.message).join(',')
+        throw new ExpressError(msg,400)
+    }else{
+        next()
+    }
+}
+
 const isAuthor=async(req,res,next)=>{
     const {id}=req.params
     const updateCampground=await campground.findById(id)
@@ -44,7 +54,7 @@ router.route('/')
             const newCampground = new campground(req.body)
             // newCampground.geometry=geoData.body.features[0].geometry
             // newCampground.images=req.files.map(f=>({url:f.path,filename:f.filename}))
-            // newCampground.author=req.user._id
+            newCampground.author=req.user._id
             await newCampground.save()
             return res.json(newCampground)    
         } catch (error) {
@@ -56,16 +66,16 @@ router.route('/')
         .get(async (req,res,next)=>{
             try {
                 const Campground=await campground.findById(req.params.id)
-                // .populate({
-                //     path:'reviews',
-                //     populate:{
-                //         path:'author'
-                //     }
-                // }).populate('author')
-                // if(!Campground){
-                //     res.json('Cannot find that campground!!')
-                //     return res.redirect('/campgrounds')
-                // }
+                .populate({
+                    path:'reviews',
+                    populate:{
+                        path:'author'
+                    }
+                }).populate('author')
+                if(!Campground){
+                    res.json('Cannot find that campground!!')
+                    return res.redirect('/campgrounds')
+                }
                 return res.json(Campground)    
             } catch (error) {
                 return next(error)
